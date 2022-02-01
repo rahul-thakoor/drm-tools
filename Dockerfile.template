@@ -1,0 +1,36 @@
+ARG BALENA_ARCH=%%BALENA_ARCH%%
+FROM balenalib/$BALENA_ARCH-debian-python:3.9-bullseye AS builder
+
+RUN install_packages \
+    build-essential \
+    git \
+    kmscube \
+    libdrm-tests \
+    rsync
+
+WORKDIR /usr/src/app/
+
+WORKDIR /rootfs
+
+WORKDIR /usr/src/app
+
+RUN pip3 install git+https://github.com/larsks/dockerize
+
+RUN dockerize -n --verbose  -o /rootfs/ \
+    /usr/bin/drmdevice \
+    /usr/bin/kmscube \
+    /usr/bin/kms-steal-crtc \
+    /usr/bin/kms-universal-planes \
+    /usr/bin/modeprint \
+    /usr/bin/modetest \
+    /usr/bin/proptest \
+    /usr/bin/texturator \
+    /usr/bin/vbltest &&\
+    rm /rootfs/Dockerfile
+
+FROM busybox:stable
+
+COPY --from=builder /rootfs/ ./
+
+
+
